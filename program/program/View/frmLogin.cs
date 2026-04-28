@@ -2,8 +2,9 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Windows.Forms;
-using QLSVNhom.DataAccess;
-using QLSVNhom.Helpers;
+using program.DataAccess;
+using program.Helpers;
+
 namespace program.View
 {
     public partial class frmLogin : Form
@@ -42,10 +43,9 @@ namespace program.View
                     {
                         MessageBox.Show($"Đăng nhập thành công! Chào {dt.Rows[0]["HOTEN"]}");
 
-                        // Chuyển sang màn hình chính
-                        // frmMain fMain = new frmMain();
-                        // fMain.Show();
-                        // this.Hide();
+                        frmMain fMain = new frmMain();
+                        fMain.Show();
+                        this.Hide();
                     }
                     else
                     {

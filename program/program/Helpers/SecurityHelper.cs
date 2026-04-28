@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace QLSVNhom.Helpers
+namespace program.Helpers
 {
     public static class SecurityHelper
     {

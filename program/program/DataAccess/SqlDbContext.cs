@@ -2,7 +2,7 @@
 using System.Configuration;
 using System.Data;
 
-namespace QLSVNhom.DataAccess
+namespace program.DataAccess
 {
     public static class SqlDbContext
     {
