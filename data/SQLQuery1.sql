@@ -57,7 +57,7 @@ GO
 
 
 -- i.
-CREATE PROCEDURE SP_INS_PUBLIC_NHANVIEN
+CREATE OR ALTER PROCEDURE SP_INS_PUBLIC_NHANVIEN
     @MANV VARCHAR(20),
     @HOTEN NVARCHAR(100),
     @EMAIL VARCHAR(20),
@@ -103,7 +103,7 @@ END;
 GO
 
 ---ii)
-CREATE PROCEDURE SP_SEL_PUBLIC_NHANVIEN
+CREATE OR ALTER PROCEDURE SP_SEL_PUBLIC_NHANVIEN
     @TENDN NVARCHAR(100),
     @MK NVARCHAR(MAX) -- Mật khẩu dùng để giải mã khóa bí mật
 AS
@@ -119,7 +119,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE SP_SEL_LOP
+CREATE OR ALTER PROCEDURE SP_SEL_LOP
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -130,7 +130,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE SP_SEL_SINHVIEN_BY_LOP
+CREATE OR ALTER PROCEDURE SP_SEL_SINHVIEN_BY_LOP
     @MALOP NVARCHAR(20)
 AS
 BEGIN
@@ -143,7 +143,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE SP_SEL_BANGDIEM
+CREATE OR ALTER PROCEDURE SP_SEL_BANGDIEM
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -167,59 +167,58 @@ BEGIN
     DECLARE @SqlCreateKey NVARCHAR(MAX);
     DECLARE @KeyName NVARCHAR(100) = QUOTENAME(@MANV);
 
-    -- BƯỚC 1: Kiểm tra và xóa khóa cũ nếu đã tồn tại để tránh lỗi "Already exists"
+    -- BƯỚC 1: Xóa khóa cũ nếu tồn tại
     IF EXISTS (SELECT * FROM sys.asymmetric_keys WHERE name = @MANV)
     BEGIN
         DECLARE @SqlDropKey NVARCHAR(MAX) = 'DROP ASYMMETRIC KEY ' + @KeyName;
         EXEC sp_executesql @SqlDropKey;
     END
 
-    -- BƯỚC 2: Tạo câu lệnh SQL động với khoảng trắng và nháy đơn an toàn
-    -- QUOTENAME(@MK, '''') sẽ tự bao bọc mật khẩu trong dấu nháy đơn và xử lý ký tự đặc biệt
+    -- BƯỚC 2: Tạo khóa RSA_512
+    -- Sử dụng QUOTENAME(@MK, '''') để bảo vệ chuỗi mật khẩu an toàn
     SET @SqlCreateKey = 'CREATE ASYMMETRIC KEY ' + @KeyName + 
                         ' WITH ALGORITHM = RSA_2048' + 
                         ' ENCRYPTION BY PASSWORD = ' + QUOTENAME(@MK, '''');
 
     BEGIN TRY
-        -- Thực thi tạo khóa RSA_512 [cite: 34, 43]
         EXEC sp_executesql @SqlCreateKey;
 
-        -- BƯỚC 3: Mã hóa lương bằng khóa vừa tạo [cite: 34, 43]
+        -- BƯỚC 3: Mã hóa lương
+        -- Ép kiểu về NVARCHAR(50) để khi giải mã dùng CAST ngược lại dễ dàng
         DECLARE @LUONG_ENCRYPTED VARBINARY(MAX);
         SET @LUONG_ENCRYPTED = ENCRYPTBYASYMKEY(ASYMKEY_ID(@MANV), CAST(@LUONGCB AS NVARCHAR(50)));
 
-        -- BƯỚC 4: Băm mật khẩu bằng SHA1 [cite: 34, 41]
+        -- BƯỚC 4: Băm mật khẩu bằng SHA1
+        -- Ép về VARCHAR để đồng bộ băm chuỗi ASCII thông thường
         DECLARE @MK_HASHED VARBINARY(MAX);
-        SET @MK_HASHED = HASHBYTES('SHA1', @MK);
+        SET @MK_HASHED = HASHBYTES('SHA1', CAST(@MK AS VARCHAR(MAX)));
 
-        -- BƯỚC 5: Dọn dẹp dữ liệu cũ trong bảng NHANVIEN (nếu có) để Insert không bị trùng PK
+        -- BƯỚC 5: Cập nhật hoặc Thêm mới nhân viên
         IF EXISTS (SELECT 1 FROM NHANVIEN WHERE MANV = @MANV)
             DELETE FROM NHANVIEN WHERE MANV = @MANV;
 
         INSERT INTO NHANVIEN (MANV, HOTEN, EMAIL, LUONG, TENDN, MATKHAU, PUBKEY)
         VALUES (@MANV, @HOTEN, @EMAIL, @LUONG_ENCRYPTED, @TENDN, @MK_HASHED, @MANV);
 
-        PRINT '✅ Thành công: Đã tạo khóa ' + @KeyName + ' và thêm nhân viên ' + @MANV;
+        PRINT N'✅ Thành công: Đã tạo khóa và thêm nhân viên ' + @MANV;
     END TRY
     BEGIN CATCH
-        -- In lỗi chi tiết để bạn biết chính xác tại sao "Lỗi thực thi"
         DECLARE @Err NVARCHAR(MAX) = ERROR_MESSAGE();
-        PRINT '❌ Lỗi thực thi: ' + @Err;
+        PRINT N'❌ Lỗi thực thi: ' + @Err;
     END CATCH
 END;
 GO
 
 EXEC SP_INS_PUBLIC_NHANVIEN 
-    'NV01', 
-    N'Nguyễn Thành Vương', 
-    'vuong@hcmus.edu.vn', 
+    'NV03', 
+    N'Trà Nguyễn Quang Thắng', 
+    'thang@hcmus.edu.vn', 
     5000000, 
-    'vuong', 
+    'thang', 
     '123';
-
 GO
 
-CREATE PROCEDURE SP_SEL_LOP_BY_MANV
+CREATE OR ALTER PROCEDURE SP_SEL_LOP_BY_MANV
     @MANV VARCHAR(20)
 AS
 BEGIN
@@ -232,7 +231,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE SP_INS_LOP
+CREATE OR ALTER PROCEDURE SP_INS_LOP
     @MALOP VARCHAR(20),
     @TENLOP NVARCHAR(100),
     @MANV VARCHAR(20)
@@ -251,7 +250,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE SP_UPD_LOP
+CREATE OR ALTER PROCEDURE SP_UPD_LOP
     @MALOP VARCHAR(20),
     @TENLOP NVARCHAR(100),
     @MANV VARCHAR(20)
@@ -271,7 +270,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE SP_DEL_LOP
+CREATE OR ALTER PROCEDURE SP_DEL_LOP
     @MALOP VARCHAR(20),
     @MANV VARCHAR(20)
 AS
@@ -295,7 +294,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE SP_SEL_SINHVIEN_BY_LOP_NV
+CREATE OR ALTER PROCEDURE SP_SEL_SINHVIEN_BY_LOP_NV
     @MALOP NVARCHAR(20),
     @MANV VARCHAR(20)
 AS
@@ -315,7 +314,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE SP_UPD_SINHVIEN
+CREATE OR ALTER PROCEDURE SP_UPD_SINHVIEN
     @MASV NVARCHAR(20),
     @HOTEN NVARCHAR(100),
     @NGAYSINH DATETIME = NULL,
@@ -352,7 +351,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE SP_SEL_BANGDIEM_BY_MASV
+CREATE OR ALTER PROCEDURE SP_SEL_BANGDIEM_BY_MASV
     @MASV VARCHAR(20),
     @MANV VARCHAR(20),
     @MK NVARCHAR(200)
@@ -380,7 +379,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE SP_UPSERT_BANGDIEM_ENC
+CREATE OR ALTER PROCEDURE SP_UPSERT_BANGDIEM_ENC
     @MASV VARCHAR(20),
     @MAHP VARCHAR(20),
     @DIEMTHI DECIMAL(5, 2),
@@ -416,3 +415,124 @@ BEGIN
     END
 END;
 GO
+
+--EXEC SP_SEL_PUBLIC_NHANVIEN 'vuong', '123';
+--GO
+
+-- 2. Thêm 20 Lớp học
+DECLARE @i INT = 1;
+WHILE @i <= 20
+BEGIN
+    DECLARE @maLop VARCHAR(20) = 'L' + RIGHT('0' + CAST(@i AS VARCHAR), 2);
+    DECLARE @tenLop NVARCHAR(100) = N'Lớp Công nghệ thông tin ' + CAST(@i AS NVARCHAR);
+    
+    INSERT INTO LOP (MALOP, TENLOP, MANV) 
+    VALUES (@maLop, @tenLop, 'NV01');
+    
+    SET @i = @i + 1;
+END;
+GO
+
+-- 3. Thêm 15 Sinh viên cho mỗi lớp (Tổng 300 SV)
+DECLARE @l INT = 1; -- Biến chạy cho Lớp
+WHILE @l <= 20
+BEGIN
+    DECLARE @maLopSV VARCHAR(20) = 'L' + RIGHT('0' + CAST(@l AS VARCHAR), 2);
+    DECLARE @s INT = 1; -- Biến chạy cho Sinh viên trong mỗi lớp
+    
+    WHILE @s <= 15
+    BEGIN
+        -- Tạo mã SV duy nhất: ví dụ SV0115 (Lớp 01, SV 15)
+        DECLARE @maSV NVARCHAR(20) = 'SV' + RIGHT('0' + CAST(@l AS VARCHAR), 2) + RIGHT('0' + CAST(@s AS VARCHAR), 2);
+        DECLARE @tenSV NVARCHAR(100) = N'Sinh viên ' + CAST(@maSV AS NVARCHAR);
+        DECLARE @tenDN NVARCHAR(100) = 'user' + @maSV;
+
+        INSERT INTO SINHVIEN (MASV, HOTEN, NGAYSINH, DIACHI, MALOP, TENDN, MATKHAU)
+        VALUES (
+            @maSV, 
+            @tenSV, 
+            '2005-01-01', 
+            N'TP. Hồ Chí Minh', 
+            @maLopSV, 
+            @tenDN, 
+            HASHBYTES('SHA1', 'password123') -- Mật khẩu mặc định băm SHA1
+        );
+        
+        SET @s = @s + 1;
+    END;
+    
+    SET @l = @l + 1;
+END;
+GO
+
+-- 4. Thêm một vài Học phần mẫu
+INSERT INTO HOCPHAN (MAHP, TENHP, SOTC) VALUES ('HP01', N'Cơ sở dữ liệu', 4);
+INSERT INTO HOCPHAN (MAHP, TENHP, SOTC) VALUES ('HP02', N'An toàn thông tin', 3);
+GO
+
+--
+
+CREATE OR ALTER PROCEDURE SP_INS_SINHVIEN
+    @MASV NVARCHAR(20),
+    @HOTEN NVARCHAR(100),
+    @NGAYSINH DATETIME,
+    @DIACHI NVARCHAR(200),
+    @MALOP NVARCHAR(20),
+    @TENDN NVARCHAR(100),
+    @MATKHAU VARCHAR(MAX) -- Mật khẩu thô từ ứng dụng
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    -- Kiểm tra trùng mã sinh viên hoặc tên đăng nhập
+    IF EXISTS (SELECT 1 FROM SINHVIEN WHERE MASV = @MASV OR TENDN = @TENDN)
+    BEGIN
+        RAISERROR (N'Mã sinh viên hoặc Tên đăng nhập đã tồn tại.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO SINHVIEN (MASV, HOTEN, NGAYSINH, DIACHI, MALOP, TENDN, MATKHAU)
+    VALUES (
+        @MASV, 
+        @HOTEN, 
+        @NGAYSINH, 
+        @DIACHI, 
+        @MALOP, 
+        @TENDN, 
+        HASHBYTES('SHA1', CAST(@MATKHAU AS VARCHAR(MAX))) -- Băm SHA1
+    );
+    
+    PRINT N'✅ Thêm sinh viên thành công.';
+END;
+GO
+
+CREATE OR ALTER PROCEDURE SP_DEL_SINHVIEN
+    @MASV NVARCHAR(20),
+    @MANV VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Kiểm tra quyền quản lý của nhân viên đối với sinh viên này
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM SINHVIEN sv
+        JOIN LOP l ON sv.MALOP = l.MALOP
+        WHERE sv.MASV = @MASV AND l.MANV = @MANV
+    )
+    BEGIN
+        RAISERROR (N'Không có quyền xóa sinh viên này (Không thuộc lớp quản lý).', 16, 1);
+        RETURN;
+    END
+
+    -- Xóa bảng điểm trước để tránh lỗi Foreign Key
+    DELETE FROM BANGDIEM WHERE MASV = @MASV;
+
+    -- Xóa sinh viên
+    DELETE FROM SINHVIEN WHERE MASV = @MASV;
+
+    PRINT N'✅ Đã xóa sinh viên và dữ liệu điểm liên quan.';
+END;
+GO
+
+
