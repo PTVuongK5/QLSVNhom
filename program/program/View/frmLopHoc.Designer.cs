@@ -29,6 +29,7 @@ namespace program.View
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            this.pnlTop = new System.Windows.Forms.Panel();
             this.lblMaLop = new System.Windows.Forms.Label();
             this.lblTenLop = new System.Windows.Forms.Label();
             this.txtMaLop = new System.Windows.Forms.TextBox();
@@ -38,13 +39,30 @@ namespace program.View
             this.btnEdit = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
             this.dgvLop = new System.Windows.Forms.DataGridView();
+            this.pnlTop.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvLop)).BeginInit();
             this.SuspendLayout();
+            // 
+            // pnlTop
+            // 
+            this.pnlTop.Controls.Add(this.lblMaLop);
+            this.pnlTop.Controls.Add(this.lblTenLop);
+            this.pnlTop.Controls.Add(this.txtMaLop);
+            this.pnlTop.Controls.Add(this.txtTenLop);
+            this.pnlTop.Controls.Add(this.btnLoad);
+            this.pnlTop.Controls.Add(this.btnAdd);
+            this.pnlTop.Controls.Add(this.btnEdit);
+            this.pnlTop.Controls.Add(this.btnDelete);
+            this.pnlTop.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pnlTop.Name = "pnlTop";
+            this.pnlTop.Padding = new System.Windows.Forms.Padding(8);
+            this.pnlTop.Size = new System.Drawing.Size(0, 96);
+            this.pnlTop.TabIndex = 0;
             // 
             // lblMaLop
             // 
             this.lblMaLop.AutoSize = true;
-            this.lblMaLop.Location = new System.Drawing.Point(16, 16);
+            this.lblMaLop.Location = new System.Drawing.Point(8, 12);
             this.lblMaLop.Name = "lblMaLop";
             this.lblMaLop.Size = new System.Drawing.Size(58, 20);
             this.lblMaLop.TabIndex = 0;
@@ -53,31 +71,31 @@ namespace program.View
             // lblTenLop
             // 
             this.lblTenLop.AutoSize = true;
-            this.lblTenLop.Location = new System.Drawing.Point(16, 52);
+            this.lblTenLop.Location = new System.Drawing.Point(8, 50);
             this.lblTenLop.Name = "lblTenLop";
-            this.lblTenLop.Size = new System.Drawing.Size(61, 20);
+            this.lblTenLop.Size = new System.Drawing.Size(64, 20);
             this.lblTenLop.TabIndex = 1;
             this.lblTenLop.Text = "Tên lớp";
             // 
             // txtMaLop
             // 
-            this.txtMaLop.Location = new System.Drawing.Point(92, 13);
+            this.txtMaLop.Location = new System.Drawing.Point(100, 10);
             this.txtMaLop.Name = "txtMaLop";
-            this.txtMaLop.Size = new System.Drawing.Size(200, 27);
+            this.txtMaLop.Size = new System.Drawing.Size(200, 32);
             this.txtMaLop.TabIndex = 2;
             // 
             // txtTenLop
             // 
-            this.txtTenLop.Location = new System.Drawing.Point(92, 49);
+            this.txtTenLop.Location = new System.Drawing.Point(100, 48);
             this.txtTenLop.Name = "txtTenLop";
-            this.txtTenLop.Size = new System.Drawing.Size(300, 27);
+            this.txtTenLop.Size = new System.Drawing.Size(300, 32);
             this.txtTenLop.TabIndex = 3;
             // 
             // btnLoad
             // 
-            this.btnLoad.Location = new System.Drawing.Point(410, 12);
+            this.btnLoad.Location = new System.Drawing.Point(410, 10);
             this.btnLoad.Name = "btnLoad";
-            this.btnLoad.Size = new System.Drawing.Size(95, 30);
+            this.btnLoad.Size = new System.Drawing.Size(95, 50);
             this.btnLoad.TabIndex = 4;
             this.btnLoad.Text = "Tải";
             this.btnLoad.UseVisualStyleBackColor = true;
@@ -85,42 +103,40 @@ namespace program.View
             // 
             // btnAdd
             // 
-            this.btnAdd.Location = new System.Drawing.Point(510, 12);
+            this.btnAdd.Location = new System.Drawing.Point(510, 10);
             this.btnAdd.Name = "btnAdd";
-            this.btnAdd.Size = new System.Drawing.Size(95, 30);
+            this.btnAdd.Size = new System.Drawing.Size(95, 50);
             this.btnAdd.TabIndex = 5;
             this.btnAdd.Text = "Thêm";
             this.btnAdd.UseVisualStyleBackColor = true;
             // 
             // btnEdit
             // 
-            this.btnEdit.Location = new System.Drawing.Point(610, 12);
+            this.btnEdit.Location = new System.Drawing.Point(610, 10);
             this.btnEdit.Name = "btnEdit";
-            this.btnEdit.Size = new System.Drawing.Size(95, 30);
+            this.btnEdit.Size = new System.Drawing.Size(95, 50);
             this.btnEdit.TabIndex = 6;
             this.btnEdit.Text = "Sửa";
             this.btnEdit.UseVisualStyleBackColor = true;
             // 
             // btnDelete
             // 
-            this.btnDelete.Location = new System.Drawing.Point(710, 12);
+            this.btnDelete.Location = new System.Drawing.Point(710, 10);
             this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(95, 30);
+            this.btnDelete.Size = new System.Drawing.Size(95, 50);
             this.btnDelete.TabIndex = 7;
             this.btnDelete.Text = "Xóa";
             this.btnDelete.UseVisualStyleBackColor = true;
             // 
             // dgvLop
             // 
-            this.dgvLop.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.dgvLop.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvLop.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvLop.Location = new System.Drawing.Point(16, 90);
+            this.dgvLop.Margin = new System.Windows.Forms.Padding(8);
             this.dgvLop.Name = "dgvLop";
             this.dgvLop.RowHeadersWidth = 51;
             this.dgvLop.RowTemplate.Height = 29;
-            this.dgvLop.Size = new System.Drawing.Size(789, 340);
+            this.dgvLop.Size = new System.Drawing.Size(796, 342);
             this.dgvLop.TabIndex = 8;
             // 
             // frmLopHoc
@@ -128,16 +144,12 @@ namespace program.View
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(820, 450);
             this.Controls.Add(this.dgvLop);
-            this.Controls.Add(this.btnDelete);
-            this.Controls.Add(this.btnEdit);
-            this.Controls.Add(this.btnAdd);
-            this.Controls.Add(this.btnLoad);
-            this.Controls.Add(this.txtTenLop);
-            this.Controls.Add(this.txtMaLop);
-            this.Controls.Add(this.lblTenLop);
-            this.Controls.Add(this.lblMaLop);
+            this.Controls.Add(this.pnlTop);
+            this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.Name = "frmLopHoc";
             this.Text = "Quản lý lớp học";
+            this.pnlTop.ResumeLayout(false);
+            this.pnlTop.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvLop)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -153,5 +165,6 @@ namespace program.View
         private System.Windows.Forms.Button btnEdit;
         private System.Windows.Forms.Button btnDelete;
         private System.Windows.Forms.DataGridView dgvLop;
+        private System.Windows.Forms.Panel pnlTop;
     }
 }

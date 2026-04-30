@@ -4,6 +4,7 @@ using Microsoft.Data.SqlClient;
 using System.Windows.Forms;
 using program.DataAccess;
 using program.Helpers;
+using program.Models;
 
 namespace program.View
 {
@@ -37,10 +38,15 @@ namespace program.View
 
                 if (dt != null && dt.Rows.Count > 0)
                 {
-                    string luongGiaiMa = dt.Rows[0]["LUONGCB"].ToString();
+                    string luongGiaiMa = Convert.ToString(dt.Rows[0]["LUONGCB"]) ?? string.Empty;
 
                     if (!string.IsNullOrEmpty(luongGiaiMa))
                     {
+                        UserSession.MaNV = Convert.ToString(dt.Rows[0]["MANV"]) ?? string.Empty;
+                        UserSession.TenNV = Convert.ToString(dt.Rows[0]["HOTEN"]) ?? string.Empty;
+                        UserSession.TenDN = username;
+                        UserSession.Password = password;
+
                         MessageBox.Show($"Đăng nhập thành công! Chào {dt.Rows[0]["HOTEN"]}");
 
                         frmMain fMain = new frmMain();

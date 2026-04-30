@@ -44,16 +44,16 @@
             // lblUser
             // 
             this.lblUser.AutoSize = true;
-            this.lblUser.Location = new System.Drawing.Point(24, 24);
+            this.lblUser.Location = new System.Drawing.Point(16,24);
             this.lblUser.Name = "lblUser";
-            this.lblUser.Size = new System.Drawing.Size(80, 20);
+            this.lblUser.Size = new System.Drawing.Size(80, 25);
             this.lblUser.TabIndex = 0;
             this.lblUser.Text = "Tài khoản";
             // 
             // lblPass
             // 
             this.lblPass.AutoSize = true;
-            this.lblPass.Location = new System.Drawing.Point(24, 72);
+            this.lblPass.Location = new System.Drawing.Point(16, 72);
             this.lblPass.Name = "lblPass";
             this.lblPass.Size = new System.Drawing.Size(66, 20);
             this.lblPass.TabIndex = 1;
@@ -61,14 +61,14 @@
             // 
             // txtUser
             // 
-            this.txtUser.Location = new System.Drawing.Point(120, 21);
+            this.txtUser.Location = new System.Drawing.Point(140, 21);
             this.txtUser.Name = "txtUser";
             this.txtUser.Size = new System.Drawing.Size(200, 27);
             this.txtUser.TabIndex = 2;
             // 
             // txtPass
             // 
-            this.txtPass.Location = new System.Drawing.Point(120, 69);
+            this.txtPass.Location = new System.Drawing.Point(140, 69);
             this.txtPass.Name = "txtPass";
             this.txtPass.Size = new System.Drawing.Size(200, 27);
             this.txtPass.TabIndex = 3;
@@ -76,9 +76,9 @@
             // 
             // btnLogin
             // 
-            this.btnLogin.Location = new System.Drawing.Point(120, 112);
+            this.btnLogin.Location = new System.Drawing.Point(120, 120);
             this.btnLogin.Name = "btnLogin";
-            this.btnLogin.Size = new System.Drawing.Size(95, 30);
+            this.btnLogin.Size = new System.Drawing.Size(160, 50);
             this.btnLogin.TabIndex = 4;
             this.btnLogin.Text = "Đăng nhập";
             this.btnLogin.UseVisualStyleBackColor = true;
@@ -87,7 +87,7 @@
             // frmLogin
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(360, 170);
+            this.ClientSize = new System.Drawing.Size(400, 200);
             this.Controls.Add(this.btnLogin);
             this.Controls.Add(this.txtPass);
             this.Controls.Add(this.txtUser);
@@ -100,6 +100,8 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Đăng nhập";
             this.AcceptButton = this.btnLogin;
+            this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.Padding = new System.Windows.Forms.Padding(12);
             this.ResumeLayout(false);
             this.PerformLayout();
         }

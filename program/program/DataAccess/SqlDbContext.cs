@@ -29,5 +29,14 @@ namespace program.DataAccess
             if (parameters != null) cmd.Parameters.AddRange(parameters);
             return cmd.ExecuteNonQuery();
         }
+
+        public static int ExecuteNonQueryStoredProcedure(string spName, SqlParameter[] parameters = null)
+        {
+            using var conn = new SqlConnection(ConnString);
+            conn.Open();
+            using var cmd = new SqlCommand(spName, conn) { CommandType = CommandType.StoredProcedure };
+            if (parameters != null) cmd.Parameters.AddRange(parameters);
+            return cmd.ExecuteNonQuery();
+        }
     }
 }

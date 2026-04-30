@@ -96,6 +96,7 @@
             this.pnlContent.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlContent.Location = new System.Drawing.Point(0, 28);
             this.pnlContent.Name = "pnlContent";
+            this.pnlContent.Padding = new System.Windows.Forms.Padding(8);
             this.pnlContent.Size = new System.Drawing.Size(900, 420);
             this.pnlContent.TabIndex = 1;
             // 
@@ -104,7 +105,8 @@
             this.lblStatus.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.lblStatus.Location = new System.Drawing.Point(0, 448);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(900, 24);
+            this.lblStatus.Padding = new System.Windows.Forms.Padding(8, 0, 0, 0);
+            this.lblStatus.Size = new System.Drawing.Size(900, 36);
             this.lblStatus.TabIndex = 2;
             this.lblStatus.Text = "Nhân viên: - | Mã NV: - | Trạng thái";
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -117,6 +119,7 @@
             this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
+            this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.Name = "frmMain";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Quản lý";
