@@ -75,7 +75,7 @@ namespace program.View
             // 
             // txtMaHP
             // 
-            this.txtMaHP.Location = new System.Drawing.Point(390, 10);
+            this.txtMaHP.Location = new System.Drawing.Point(410, 10);
             this.txtMaHP.Name = "txtMaHP";
             this.txtMaHP.Size = new System.Drawing.Size(160, 27);
             this.txtMaHP.TabIndex = 3;
@@ -98,22 +98,23 @@ namespace program.View
             // 
             // btnLoad
             // 
-            this.btnLoad.Location = new System.Drawing.Point(320, 48);
+            this.btnLoad.Location = new System.Drawing.Point(700, 10);
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(95, 40);
             this.btnLoad.TabIndex = 6;
             this.btnLoad.Text = "Tải";
             this.btnLoad.UseVisualStyleBackColor = true;
-            this.btnLoad.Click += new System.EventHandler(this.btnLoad_Click);
+            
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(420, 48);
+            this.btnSave.Location = new System.Drawing.Point(700, 54);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(95, 40);
             this.btnSave.TabIndex = 7;
             this.btnSave.Text = "Lưu";
             this.btnSave.UseVisualStyleBackColor = true;
+
             // 
             // dgvBangDiem
             // 

@@ -50,20 +50,20 @@ namespace program.View
             // cmbLop
             // 
             this.cmbLop.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbLop.Location = new System.Drawing.Point(72, 10);
+            this.cmbLop.Location = new System.Drawing.Point(112, 10);
             this.cmbLop.Name = "cmbLop";
-            this.cmbLop.Size = new System.Drawing.Size(200, 28);
+            this.cmbLop.Size = new System.Drawing.Size(650, 28);
             this.cmbLop.TabIndex = 1;
             // 
             // btnLoad
             // 
-            this.btnLoad.Location = new System.Drawing.Point(290, 10);
+            this.btnLoad.Location = new System.Drawing.Point(768, 10);
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(95, 40);
             this.btnLoad.TabIndex = 2;
             this.btnLoad.Text = "Tải";
             this.btnLoad.UseVisualStyleBackColor = true;
-            this.btnLoad.Click += new System.EventHandler(this.btnLoad_Click);
+            
             // 
             // dgvSinhVien
             // 

@@ -14,6 +14,7 @@ namespace program.View
             InitializeComponent();
             Load += frmSinhVien_Load;
             dgvSinhVien.CellEndEdit += dgvSinhVien_CellEndEdit;
+            btnLoad.Click += btnLoad_Click;
         }
 
         private void frmSinhVien_Load(object sender, EventArgs e)

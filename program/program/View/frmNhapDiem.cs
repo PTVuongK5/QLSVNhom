@@ -13,6 +13,7 @@ namespace program.View
         {
             InitializeComponent();
             btnSave.Click += btnSave_Click;
+            btnLoad.Click += btnLoad_Click;
             dgvBangDiem.CellClick += dgvBangDiem_CellClick;
         }
 
