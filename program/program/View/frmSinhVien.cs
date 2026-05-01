@@ -9,8 +9,8 @@ namespace program.View
 {
     public partial class frmSinhVien : Form
     {
-        // Flag để tắt SelectionChanged khi đang gán DataSource mới
-        private bool _isBinding = false;
+        // Dùng để tạm dừng xử lý SelectionChanged khi đang bind lại grid
+        private bool _suppressSelection = false;
 
         public frmSinhVien()
         {
@@ -32,8 +32,8 @@ namespace program.View
         {
             dtpNgaySinh.Value = DateTime.Today;
             SetButtonStates(rowSelected: false);
-            LoadLopForUser();
-            AutoSelectFirstClass();
+            LoadLopForUser();           // điền combo
+            AutoSelectFirstClass();     // chọn lớp đầu tiên và tải SV
         }
 
         private void LoadLopForUser()
@@ -56,6 +56,9 @@ namespace program.View
             }
         }
 
+        /// <summary>
+        /// Tự động chọn lớp đầu tiên trong danh sách và tải sinh viên của lớp đó.
+        /// </summary>
         private void AutoSelectFirstClass()
         {
             if (cmbLop.Items.Count > 0)
@@ -72,6 +75,7 @@ namespace program.View
                 MessageBox.Show("Vui lòng chọn lớp.");
                 return;
             }
+            // Xóa ô tìm kiếm khi tải lại theo lớp
             txtSearch.Clear();
             LoadStudentsByClass(cmbLop.SelectedValue?.ToString() ?? string.Empty);
         }
@@ -108,6 +112,7 @@ namespace program.View
 
             if (string.IsNullOrWhiteSpace(keyword))
             {
+                // Nếu ô trống thì tải lại theo lớp đang chọn
                 if (cmbLop.SelectedItem != null)
                     LoadStudentsByClass(cmbLop.SelectedValue?.ToString() ?? string.Empty);
                 return;
@@ -136,8 +141,7 @@ namespace program.View
 
         private void BindGrid(DataTable dt)
         {
-            // Bật flag để ngăn SelectionChanged chạy trong lúc gán DataSource
-            _isBinding = true;
+            _suppressSelection = true;
             try
             {
                 dgvSinhVien.AutoGenerateColumns = true;
@@ -146,30 +150,22 @@ namespace program.View
                 dgvSinhVien.AllowUserToAddRows = false;
                 dgvSinhVien.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 dgvSinhVien.MultiSelect = false;
+                dgvSinhVien.ClearSelection();
             }
             finally
             {
-                // Luôn tắt flag dù có lỗi hay không
-                _isBinding = false;
+                _suppressSelection = false;
             }
 
-            // Sau khi bind xong: nếu grid tự chọn dòng (thường xảy ra khi chỉ có 1 dòng)
-            // thì điền thông tin luôn, ngược lại clear form
-            if (dgvSinhVien.CurrentRow != null && !dgvSinhVien.CurrentRow.IsNewRow)
-                PopulateFormFromRow(dgvSinhVien.CurrentRow);
-            else
-            {
-                ClearInputFields();
-                SetButtonStates(rowSelected: false);
-            }
+            ClearInputFields();
+            SetButtonStates(rowSelected: false);
         }
 
         // ── CHỌN DÒNG → ĐIỀN VÀO FORM ────────────────────────────────────────
 
         private void dgvSinhVien_SelectionChanged(object sender, EventArgs e)
         {
-            // Bỏ qua nếu đang trong quá trình bind dữ liệu
-            if (_isBinding) return;
+            if (_suppressSelection) return;
 
             if (dgvSinhVien.CurrentRow == null || dgvSinhVien.CurrentRow.IsNewRow)
             {
@@ -178,15 +174,8 @@ namespace program.View
                 return;
             }
 
-            PopulateFormFromRow(dgvSinhVien.CurrentRow);
-        }
+            var row = dgvSinhVien.CurrentRow;
 
-        /// <summary>
-        /// Điền thông tin sinh viên từ một dòng grid vào các ô nhập liệu.
-        /// Dùng chung cho SelectionChanged và sau khi BindGrid (trường hợp 1 dòng).
-        /// </summary>
-        private void PopulateFormFromRow(DataGridViewRow row)
-        {
             txtMaSV.Text = row.Cells["MASV"]?.Value?.ToString() ?? string.Empty;
             txtHoTen.Text = row.Cells["HOTEN"]?.Value?.ToString() ?? string.Empty;
             txtDiaChi.Text = row.Cells["DIACHI"]?.Value?.ToString() ?? string.Empty;
@@ -365,6 +354,10 @@ namespace program.View
             dtpNgaySinh.Value = DateTime.Today;
         }
 
+        /// <summary>
+        /// rowSelected = false → chế độ thêm mới: chỉ Thêm enabled.
+        /// rowSelected = true  → chế độ chỉnh sửa: Sửa + Xóa enabled, Thêm disabled.
+        /// </summary>
         private void SetButtonStates(bool rowSelected)
         {
             btnAdd.Enabled = !rowSelected;
