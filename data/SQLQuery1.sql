@@ -1,0 +1,720 @@
+-- =========================================
+-- TẠO DATABASE
+-- =========================================
+CREATE DATABASE QLSVNhom;
+GO
+
+USE QLSVNhom;
+GO
+
+DROP PROCEDURE IF EXISTS SP_INS_PUBLIC_NHANVIEN;
+DROP PROCEDURE IF EXISTS SP_SEL_PUBLIC_NHANVIEN;
+
+DROP PROCEDURE IF EXISTS SP_SEL_LOP;
+DROP PROCEDURE IF EXISTS SP_SEL_LOP_BY_MANV;
+DROP PROCEDURE IF EXISTS SP_INS_LOP;
+DROP PROCEDURE IF EXISTS SP_UPD_LOP;
+DROP PROCEDURE IF EXISTS SP_DEL_LOP;
+
+DROP PROCEDURE IF EXISTS SP_SEL_SINHVIEN_BY_LOP;
+DROP PROCEDURE IF EXISTS SP_SEL_SINHVIEN_BY_LOP_NV;
+DROP PROCEDURE IF EXISTS SP_SEL_SINHVIEN_BY_MASV;
+DROP PROCEDURE IF EXISTS SP_UPD_SINHVIEN;
+DROP PROCEDURE IF EXISTS SP_INS_SINHVIEN;
+DROP PROCEDURE IF EXISTS SP_DEL_SINHVIEN;
+
+DROP PROCEDURE IF EXISTS SP_SEL_BANGDIEM;
+DROP PROCEDURE IF EXISTS SP_SEL_BANGDIEM_BY_MASV;
+DROP PROCEDURE IF EXISTS SP_UPSERT_BANGDIEM_ENC;
+GO
+
+-- =========================================
+-- XÓA BẢNG THEO THỨ TỰ KHÓA NGOẠI
+-- =========================================
+IF OBJECT_ID('BANGDIEM', 'U') IS NOT NULL DROP TABLE BANGDIEM;
+IF OBJECT_ID('SINHVIEN', 'U') IS NOT NULL DROP TABLE SINHVIEN;
+IF OBJECT_ID('HOCPHAN', 'U') IS NOT NULL DROP TABLE HOCPHAN;
+IF OBJECT_ID('LOP', 'U') IS NOT NULL DROP TABLE LOP;
+IF OBJECT_ID('NHANVIEN', 'U') IS NOT NULL DROP TABLE NHANVIEN;
+GO
+
+-- =========================================
+-- TẠO BẢNG
+-- =========================================
+
+-- NHÂN VIÊN
+CREATE TABLE NHANVIEN (
+    MANV VARCHAR(20) PRIMARY KEY,
+    HOTEN NVARCHAR(100) NOT NULL,
+    EMAIL VARCHAR(100),
+    LUONG VARBINARY(MAX),
+    TENDN NVARCHAR(100) NOT NULL UNIQUE,
+    MATKHAU VARBINARY(MAX) NOT NULL,
+    PUBKEY VARCHAR(20)
+);
+GO
+
+-- LỚP
+CREATE TABLE LOP (
+    MALOP VARCHAR(20) PRIMARY KEY,
+    TENLOP NVARCHAR(100) NOT NULL,
+    MANV VARCHAR(20) NOT NULL,
+
+    CONSTRAINT FK_LOP_NHANVIEN
+        FOREIGN KEY (MANV)
+        REFERENCES NHANVIEN(MANV)
+);
+GO
+
+-- SINH VIÊN
+CREATE TABLE SINHVIEN (
+    MASV VARCHAR(20) PRIMARY KEY,
+    HOTEN NVARCHAR(100) NOT NULL,
+    NGAYSINH DATETIME,
+    DIACHI NVARCHAR(200),
+    MALOP VARCHAR(20),
+    TENDN NVARCHAR(100) NOT NULL UNIQUE,
+    MATKHAU VARBINARY(MAX) NOT NULL,
+
+    CONSTRAINT FK_SINHVIEN_LOP
+        FOREIGN KEY (MALOP)
+        REFERENCES LOP(MALOP)
+);
+GO
+
+-- HỌC PHẦN
+CREATE TABLE HOCPHAN (
+    MAHP VARCHAR(20) PRIMARY KEY,
+    TENHP NVARCHAR(100) NOT NULL,
+    SOTC INT
+);
+GO
+
+-- BẢNG ĐIỂM
+CREATE TABLE BANGDIEM (
+    MASV VARCHAR(20),
+    MAHP VARCHAR(20),
+    DIEMTHI VARBINARY(MAX),
+
+    CONSTRAINT PK_BANGDIEM
+        PRIMARY KEY (MASV, MAHP),
+
+    CONSTRAINT FK_BANGDIEM_SINHVIEN
+        FOREIGN KEY (MASV)
+        REFERENCES SINHVIEN(MASV),
+
+    CONSTRAINT FK_BANGDIEM_HOCPHAN
+        FOREIGN KEY (MAHP)
+        REFERENCES HOCPHAN(MAHP)
+);
+GO
+
+-- =========================================
+-- PROCEDURE NHÂN VIÊN
+-- =========================================
+
+CREATE PROCEDURE SP_INS_PUBLIC_NHANVIEN
+    @MANV VARCHAR(20),
+    @HOTEN NVARCHAR(100),
+    @EMAIL VARCHAR(100),
+    @LUONGCB INT,
+    @TENDN NVARCHAR(100),
+    @MK VARCHAR(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @SqlCreateKey NVARCHAR(MAX);
+
+    SET @SqlCreateKey =
+        'CREATE ASYMMETRIC KEY ' + QUOTENAME(@MANV) +
+        ' WITH ALGORITHM = RSA_2048 ENCRYPTION BY PASSWORD = ''' + @MK + '''';
+
+    BEGIN TRY
+
+        EXEC sp_executesql @SqlCreateKey;
+
+        DECLARE @LUONG_ENCRYPTED VARBINARY(MAX);
+
+        SET @LUONG_ENCRYPTED =
+            ENCRYPTBYASYMKEY(
+                ASYMKEY_ID(@MANV),
+                CAST(@LUONGCB AS NVARCHAR(50))
+            );
+
+        INSERT INTO NHANVIEN
+        VALUES
+        (
+            @MANV,
+            @HOTEN,
+            @EMAIL,
+            @LUONG_ENCRYPTED,
+            @TENDN,
+            HASHBYTES('SHA1', @MK),
+            @MANV
+        );
+
+        PRINT N'✅ Thêm nhân viên thành công';
+
+    END TRY
+    BEGIN CATCH
+        PRINT N'❌ Lỗi: ' + ERROR_MESSAGE();
+    END CATCH
+END;
+GO
+
+CREATE PROCEDURE SP_SEL_PUBLIC_NHANVIEN
+    @TENDN NVARCHAR(100),
+    @MK NVARCHAR(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        MANV,
+        HOTEN,
+        EMAIL,
+        CAST(
+            DECRYPTBYASYMKEY(
+                ASYMKEY_ID(PUBKEY),
+                LUONG,
+                @MK
+            ) AS NVARCHAR(50)
+        ) AS LUONGCB
+    FROM NHANVIEN
+    WHERE TENDN = @TENDN;
+END;
+GO
+
+-- =========================================
+-- PROCEDURE LỚP
+-- =========================================
+
+CREATE PROCEDURE SP_SEL_LOP
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT *
+    FROM LOP
+    ORDER BY MALOP;
+END;
+GO
+
+CREATE PROCEDURE SP_SEL_LOP_BY_MANV
+    @MANV VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT *
+    FROM LOP
+    WHERE MANV = @MANV
+    ORDER BY MALOP;
+END;
+GO
+
+CREATE PROCEDURE SP_INS_LOP
+    @MALOP VARCHAR(20),
+    @TENLOP NVARCHAR(100),
+    @MANV VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (SELECT 1 FROM LOP WHERE MALOP = @MALOP)
+    BEGIN
+        RAISERROR(N'Mã lớp đã tồn tại.',16,1);
+        RETURN;
+    END
+
+    INSERT INTO LOP
+    VALUES (@MALOP,@TENLOP,@MANV);
+END;
+GO
+
+CREATE PROCEDURE SP_UPD_LOP
+    @MALOP VARCHAR(20),
+    @TENLOP NVARCHAR(100),
+    @MANV VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM LOP
+        WHERE MALOP = @MALOP
+        AND MANV = @MANV
+    )
+    BEGIN
+        RAISERROR(N'Không có quyền cập nhật.',16,1);
+        RETURN;
+    END
+
+    UPDATE LOP
+    SET TENLOP = @TENLOP
+    WHERE MALOP = @MALOP
+    AND MANV = @MANV;
+END;
+GO
+
+CREATE PROCEDURE SP_DEL_LOP
+    @MALOP VARCHAR(20),
+    @MANV VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM LOP
+        WHERE MALOP = @MALOP
+        AND MANV = @MANV
+    )
+    BEGIN
+        RAISERROR(N'Không có quyền xóa.',16,1);
+        RETURN;
+    END
+
+    IF EXISTS
+    (
+        SELECT 1
+        FROM SINHVIEN
+        WHERE MALOP = @MALOP
+    )
+    BEGIN
+    RAISERROR(N'Lớp đã có sinh viên.',16,1);
+        RETURN;
+    END
+
+    DELETE FROM LOP
+    WHERE MALOP = @MALOP
+    AND MANV = @MANV;
+END;
+GO
+
+-- =========================================
+-- PROCEDURE SINH VIÊN
+-- =========================================
+
+CREATE PROCEDURE SP_SEL_SINHVIEN_BY_LOP
+    @MALOP VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT MASV, HOTEN, NGAYSINH, DIACHI, MALOP, TENDN
+    FROM SINHVIEN
+    WHERE MALOP = @MALOP
+    ORDER BY MASV;
+END;
+GO
+
+-- FIX: Chỉ SELECT các cột cần thiết, bỏ MATKHAU (VARBINARY) tránh lỗi DataGridView
+CREATE PROCEDURE SP_SEL_SINHVIEN_BY_LOP_NV
+    @MALOP VARCHAR(20),
+    @MANV VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM LOP
+        WHERE MALOP = @MALOP
+        AND MANV = @MANV
+    )
+    BEGIN
+        RAISERROR(N'Không có quyền xem lớp.',16,1);
+        RETURN;
+    END
+
+    SELECT MASV, HOTEN, NGAYSINH, DIACHI, MALOP, TENDN
+    FROM SINHVIEN
+    WHERE MALOP = @MALOP
+    ORDER BY MASV;
+END;
+GO
+
+-- FIX: Chỉ SELECT các cột cần thiết, bỏ MATKHAU (VARBINARY) tránh lỗi DataGridView
+CREATE PROCEDURE SP_SEL_SINHVIEN_BY_MASV
+    @MASV VARCHAR(20),
+    @MANV VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM SINHVIEN sv
+        JOIN LOP l ON sv.MALOP = l.MALOP
+        WHERE sv.MASV = @MASV
+        AND l.MANV = @MANV
+    )
+    BEGIN
+        RAISERROR(N'Không có quyền xem sinh viên.',16,1);
+        RETURN;
+    END
+
+    SELECT MASV, HOTEN, NGAYSINH, DIACHI, MALOP, TENDN
+    FROM SINHVIEN
+    WHERE MASV = @MASV;
+END;
+GO
+
+CREATE PROCEDURE SP_INS_SINHVIEN
+    @MASV VARCHAR(20),
+    @HOTEN NVARCHAR(100),
+    @NGAYSINH DATETIME,
+    @DIACHI NVARCHAR(200),
+    @MALOP VARCHAR(20),
+    @TENDN NVARCHAR(100),
+    @MATKHAU VARCHAR(MAX)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS
+    (
+        SELECT 1
+        FROM SINHVIEN
+        WHERE MASV = @MASV
+        OR TENDN = @TENDN
+    )
+    BEGIN
+        RAISERROR(N'Mã SV hoặc tên đăng nhập đã tồn tại.',16,1);
+        RETURN;
+    END
+
+    INSERT INTO SINHVIEN
+    VALUES
+    (
+        @MASV,
+        @HOTEN,
+        @NGAYSINH,
+        @DIACHI,
+        @MALOP,
+        @TENDN,
+        HASHBYTES('SHA1',@MATKHAU)
+    );
+
+    PRINT N'✅ Thêm sinh viên thành công';
+END;
+GO
+
+CREATE PROCEDURE SP_UPD_SINHVIEN
+    @MASV VARCHAR(20),
+    @HOTEN NVARCHAR(100),
+    @NGAYSINH DATETIME,
+    @DIACHI NVARCHAR(200),
+    @MALOP VARCHAR(20),
+    @MANV VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM SINHVIEN sv
+        JOIN LOP l ON sv.MALOP = l.MALOP
+        WHERE sv.MASV = @MASV
+        AND l.MANV = @MANV
+    )
+    BEGIN
+        RAISERROR(N'Không có quyền cập nhật.',16,1);
+        RETURN;
+    END
+
+    UPDATE SINHVIEN
+    SET HOTEN = @HOTEN,
+        NGAYSINH = @NGAYSINH,
+        DIACHI = @DIACHI,
+        MALOP = @MALOP
+    WHERE MASV = @MASV;
+END;
+GO
+
+CREATE PROCEDURE SP_DEL_SINHVIEN
+@MASV VARCHAR(20),
+    @MANV VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM SINHVIEN sv
+        JOIN LOP l ON sv.MALOP = l.MALOP
+        WHERE sv.MASV = @MASV
+        AND l.MANV = @MANV
+    )
+    BEGIN
+        RAISERROR(N'Không có quyền xóa.',16,1);
+        RETURN;
+    END
+
+    DELETE FROM BANGDIEM
+    WHERE MASV = @MASV;
+
+    DELETE FROM SINHVIEN
+    WHERE MASV = @MASV;
+
+    PRINT N'✅ Đã xóa sinh viên';
+END;
+GO
+
+-- =========================================
+-- PROCEDURE BẢNG ĐIỂM
+-- =========================================
+
+CREATE PROCEDURE SP_SEL_BANGDIEM
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT *
+    FROM BANGDIEM
+    ORDER BY MASV, MAHP;
+END;
+GO
+
+CREATE PROCEDURE SP_SEL_BANGDIEM_BY_MASV
+    @MASV VARCHAR(20),
+    @MANV VARCHAR(20),
+    @MK NVARCHAR(200)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM SINHVIEN sv
+        JOIN LOP l ON sv.MALOP = l.MALOP
+        WHERE sv.MASV = @MASV
+        AND l.MANV = @MANV
+    )
+    BEGIN
+        RAISERROR(N'Không có quyền xem bảng điểm.',16,1);
+        RETURN;
+    END
+
+    SELECT
+        bd.MASV,
+        bd.MAHP,
+        CAST(
+            DECRYPTBYASYMKEY(
+                ASYMKEY_ID(@MANV),
+                bd.DIEMTHI,
+                @MK
+            ) AS NVARCHAR(20)
+        ) AS DIEMTHI
+    FROM BANGDIEM bd
+    WHERE bd.MASV = @MASV;
+END;
+GO
+
+CREATE PROCEDURE SP_UPSERT_BANGDIEM_ENC
+    @MASV VARCHAR(20),
+    @MAHP VARCHAR(20),
+    @DIEMTHI DECIMAL(5,2),
+    @MANV VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM SINHVIEN sv
+        JOIN LOP l ON sv.MALOP = l.MALOP
+        WHERE sv.MASV = @MASV
+        AND l.MANV = @MANV
+    )
+    BEGIN
+        RAISERROR(N'Không có quyền nhập điểm.',16,1);
+        RETURN;
+    END
+
+    DECLARE @DIEM_ENC VARBINARY(MAX);
+
+    SET @DIEM_ENC =
+        ENCRYPTBYASYMKEY(
+            ASYMKEY_ID(@MANV),
+            CAST(@DIEMTHI AS NVARCHAR(20))
+        );
+
+    IF EXISTS
+    (
+        SELECT 1
+        FROM BANGDIEM
+        WHERE MASV = @MASV
+        AND MAHP = @MAHP
+    )
+    BEGIN
+        UPDATE BANGDIEM
+        SET DIEMTHI = @DIEM_ENC
+        WHERE MASV = @MASV
+        AND MAHP = @MAHP;
+    END
+    ELSE
+    BEGIN
+        INSERT INTO BANGDIEM
+        VALUES (@MASV,@MAHP,@DIEM_ENC);
+    END
+END;
+GO
+
+-- =========================================
+-- TEST DỮ LIỆU
+-- =========================================
+
+-- THÊM NHÂN VIÊN
+EXEC SP_INS_PUBLIC_NHANVIEN
+    'NV01',
+    N'Nguyễn Văn A',
+    'nva@hcmus.edu.vn',
+    5000000,
+    'admin',
+    '123';
+GO
+
+-- THÊM LỚP
+DECLARE @i INT = 1;
+
+WHILE @i <= 20
+BEGIN
+
+    DECLARE @MALOP VARCHAR(20);
+    DECLARE @TENLOP NVARCHAR(100);
+
+    SET @MALOP = 'L' + RIGHT('0' + CAST(@i AS VARCHAR),2);
+    SET @TENLOP = N'Lớp CNTT ' + CAST(@i AS NVARCHAR);
+
+    INSERT INTO LOP
+    VALUES (@MALOP,@TENLOP,'NV01');
+
+    SET @i = @i + 1;
+END;
+GO
+
+-- THÊM SINH VIÊN
+DECLARE @l INT = 1;
+WHILE @l <= 20
+BEGIN
+
+    DECLARE @MALOPSV VARCHAR(20);
+
+    SET @MALOPSV =
+        'L' + RIGHT('0' + CAST(@l AS VARCHAR),2);
+
+    DECLARE @s INT = 1;
+
+    WHILE @s <= 15
+    BEGIN
+
+        DECLARE @MASV VARCHAR(20);
+        DECLARE @HOTEN NVARCHAR(100);
+        DECLARE @TENDN NVARCHAR(100);
+
+        SET @MASV =
+            'SV'
+            + RIGHT('0' + CAST(@l AS VARCHAR),2)
+            + RIGHT('0' + CAST(@s AS VARCHAR),2);
+
+        SET @HOTEN = N'Sinh viên ' + @MASV;
+        SET @TENDN = 'user' + @MASV;
+
+        INSERT INTO SINHVIEN
+        VALUES
+        (
+            @MASV,
+            @HOTEN,
+            '2005-01-01',
+            N'TP.HCM',
+            @MALOPSV,
+            @TENDN,
+            HASHBYTES('SHA1','password123')
+        );
+
+        SET @s = @s + 1;
+    END
+
+    SET @l = @l + 1;
+END;
+GO
+
+-- THÊM HỌC PHẦN
+INSERT INTO HOCPHAN
+VALUES ('HP01',N'Cơ sở dữ liệu',4);
+
+INSERT INTO HOCPHAN
+VALUES ('HP02',N'An toàn thông tin',3);
+GO
+-- SV0101
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0101', 'HP01', 8.5,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0101', 'HP02', 7.0,  'NV01';
+
+-- SV0102
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0102', 'HP01', 6.0,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0102', 'HP02', 9.0,  'NV01';
+
+-- SV0103
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0103', 'HP01', 7.5,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0103', 'HP02', 8.0,  'NV01';
+
+-- SV0104
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0104', 'HP01', 5.0,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0104', 'HP02', 6.5,  'NV01';
+
+-- SV0105
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0105', 'HP01', 9.0,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0105', 'HP02', 8.5,  'NV01';
+
+-- SV0106
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0106', 'HP01', 4.0,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0106', 'HP02', 5.5,  'NV01';
+
+-- SV0107
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0107', 'HP01', 7.0,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0107', 'HP02', 7.5,  'NV01';
+
+-- SV0108
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0108', 'HP01', 8.0,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0108', 'HP02', 9.5,  'NV01';
+
+-- SV0109
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0109', 'HP01', 6.5,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0109', 'HP02', 4.5,  'NV01';
+
+-- SV0110
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0110', 'HP01', 10.0, 'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0110', 'HP02', 9.0,  'NV01';
+
+-- SV0111
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0111', 'HP01', 5.5,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0111', 'HP02', 6.0,  'NV01';
+
+-- SV0112
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0112', 'HP01', 3.5,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0112', 'HP02', 5.0,  'NV01';
+
+-- SV0113
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0113', 'HP01', 8.0,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0113', 'HP02', 7.0,  'NV01';
+
+-- SV0114
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0114', 'HP01', 7.5,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0114', 'HP02', 8.5,  'NV01';
+
+-- SV0115
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0115', 'HP01', 6.0,  'NV01';
+EXEC SP_UPSERT_BANGDIEM_ENC 'SV0115', 'HP02', 7.0,  'NV01';
+GO

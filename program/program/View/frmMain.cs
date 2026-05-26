@@ -17,6 +17,8 @@ namespace program.View
         private void frmMain_Load(object sender, EventArgs e)
         {
             lblStatus.Text = $"Nhân viên: {UserSession.TenNV} | Mã NV: {UserSession.MaNV} | Đang hoạt động";
+
+            OpenChildForm(new frmLopHoc());
         }
 
         /// <summary>
