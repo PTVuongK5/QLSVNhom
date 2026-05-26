@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
 using program.DataAccess;
 using program.Models;
+using program.Helpers;
 
 namespace program.View
 {
@@ -41,7 +42,7 @@ namespace program.View
             string maSv = txtMaSV.Text.Trim();
             string maHp = txtMaHP.Text.Trim();
             string diemText = txtDiem.Text.Trim();
-
+            
             if (string.IsNullOrWhiteSpace(maSv) || string.IsNullOrWhiteSpace(maHp))
             {
                 MessageBox.Show("Vui lòng nhập mã sinh viên và mã học phần.");
@@ -60,13 +61,15 @@ namespace program.View
                 return;
             }
 
+            byte[] encryptedDiem = SecurityHelper.encryptDataWithPublicKey(diemThi.ToString());
+
             try
             {
                 var paras = new[]
                 {
                     new SqlParameter("@MASV", maSv),
                     new SqlParameter("@MAHP", maHp),
-                    new SqlParameter("@DIEMTHI", diemThi),
+                    new SqlParameter("@DIEM_ENC", encryptedDiem),
                     new SqlParameter("@MANV", UserSession.MaNV)
                 };
 
@@ -105,7 +108,7 @@ namespace program.View
 
             txtMaSV.Text = row.Cells["MASV"]?.Value?.ToString() ?? string.Empty;
             txtMaHP.Text = row.Cells["MAHP"]?.Value?.ToString() ?? string.Empty;
-            txtDiem.Text = row.Cells["DIEMTHI"]?.Value?.ToString() ?? string.Empty;
+            txtDiem.Text = row.Cells["DIEM_ENC"]?.Value?.ToString() ?? string.Empty;
         }
     }
 }
