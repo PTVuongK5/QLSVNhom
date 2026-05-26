@@ -509,13 +509,7 @@ BEGIN
     SELECT
         bd.MASV,
         bd.MAHP,
-        CAST(
-            DECRYPTBYASYMKEY(
-                ASYMKEY_ID(@MANV),
-                bd.DIEMTHI,
-                @MK
-            ) AS NVARCHAR(20)
-        ) AS DIEMTHI
+        bd.DIEMTHI,
     FROM BANGDIEM bd
     WHERE bd.MASV = @MASV;
 END;
@@ -524,7 +518,7 @@ GO
 CREATE PROCEDURE SP_UPSERT_BANGDIEM_ENC
     @MASV VARCHAR(20),
     @MAHP VARCHAR(20),
-    @DIEMTHI DECIMAL(5,2),
+    @DIEM_ENC VARBINARY(MAX),
     @MANV VARCHAR(20)
 AS
 BEGIN
@@ -542,14 +536,6 @@ BEGIN
         RAISERROR(N'Không có quyền nhập điểm.',16,1);
         RETURN;
     END
-
-    DECLARE @DIEM_ENC VARBINARY(MAX);
-
-    SET @DIEM_ENC =
-        ENCRYPTBYASYMKEY(
-            ASYMKEY_ID(@MANV),
-            CAST(@DIEMTHI AS NVARCHAR(20))
-        );
 
     IF EXISTS
     (
