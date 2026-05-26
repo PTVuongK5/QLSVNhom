@@ -91,6 +91,11 @@ namespace program.View
                 new SqlParameter("@MANV", UserSession.MaNV),
                 new SqlParameter("@MK", UserSession.Password)
             });
+            foreach (DataRow row in dt.Rows)
+            {
+                string diemGiaiMa = SecurityHelper.decryptDataWithPrivateKey(row["DIEMTHI"] as byte[], UserSession.Password);
+                row["DIEMTHI"] = diemGiaiMa;
+            }
 
             dgvBangDiem.AutoGenerateColumns = true;
             dgvBangDiem.DataSource = dt;
@@ -108,7 +113,7 @@ namespace program.View
 
             txtMaSV.Text = row.Cells["MASV"]?.Value?.ToString() ?? string.Empty;
             txtMaHP.Text = row.Cells["MAHP"]?.Value?.ToString() ?? string.Empty;
-            txtDiem.Text = row.Cells["DIEM_ENC"]?.Value?.ToString() ?? string.Empty;
+            txtDiem.Text = row.Cells["DIEMTHI"]?.Value?.ToString() ?? string.Empty;
         }
     }
 }

@@ -11,7 +11,7 @@ namespace program.Helpers
             using var sha1 = SHA1.Create();
             return sha1.ComputeHash(Encoding.UTF8.GetBytes(plainText));
         }
-        
+
         public static void CreateAsymmetricKey(string password)
         {
             using var rsa = RSA.Create(2048);
@@ -40,6 +40,7 @@ namespace program.Helpers
             );
 
             //lưu publicKey, encryptedPrivateKey, salt, iv vào file
+            Directory.CreateDirectory("user");
             File.WriteAllBytes(
             $"user/public.key",
             publicKey
