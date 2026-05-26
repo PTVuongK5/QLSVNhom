@@ -150,6 +150,16 @@ namespace program.View
                 dgvSinhVien.AllowUserToAddRows = false;
                 dgvSinhVien.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 dgvSinhVien.MultiSelect = false;
+
+                // ── FIX: Ẩn các cột chứa dữ liệu nhị phân (VARBINARY) ──────
+                // MATKHAU kiểu VARBINARY(MAX) không thể render → gây lỗi
+                // ArgumentException: Parameter is not valid trong DataGridView
+                foreach (string col in new[] { "MATKHAU", "MALOP" })
+                {
+                    if (dgvSinhVien.Columns.Contains(col))
+                        dgvSinhVien.Columns[col].Visible = false;
+                }
+
                 dgvSinhVien.ClearSelection();
             }
             finally
@@ -195,7 +205,15 @@ namespace program.View
             txtTenDN.ReadOnly = true;
 
             // Đồng bộ combo lớp với lớp của sinh viên được chọn
-            string maLopSv = row.Cells["MALOP"]?.Value?.ToString() ?? string.Empty;
+            // Đọc từ DataTable gốc vì cột MALOP đã bị ẩn trên grid
+            string maLopSv = string.Empty;
+            if (dgvSinhVien.DataSource is DataTable sourceTable
+                && dgvSinhVien.CurrentRow.Index >= 0
+                && sourceTable.Columns.Contains("MALOP"))
+            {
+                maLopSv = sourceTable.Rows[dgvSinhVien.CurrentRow.Index]["MALOP"]?.ToString() ?? string.Empty;
+            }
+
             if (!string.IsNullOrEmpty(maLopSv))
                 cmbLop.SelectedValue = maLopSv;
 

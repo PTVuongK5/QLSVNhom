@@ -30,10 +30,9 @@ namespace program.View
             {
                 SqlParameter[] paras = {
                     new SqlParameter("@TENDN", username),
-                    new SqlParameter("@MK", password) // MK dùng để giải mã Asymmetric Key [cite: 45]
+                    new SqlParameter("@MK", password) 
                 };
 
-                // Gọi Stored Procedure đã tạo trong SQL
                 DataTable dt = SqlDbContext.ExecuteQuery("SP_SEL_PUBLIC_NHANVIEN", paras);
 
                 if (dt != null && dt.Rows.Count > 0)
