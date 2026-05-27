@@ -11,6 +11,7 @@
         private System.Windows.Forms.TextBox txtUser;
         private System.Windows.Forms.TextBox txtPass;
         private System.Windows.Forms.Button btnLogin;
+        private System.Windows.Forms.LinkLabel lnkRegister;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -39,6 +40,7 @@
             this.txtUser = new System.Windows.Forms.TextBox();
             this.txtPass = new System.Windows.Forms.TextBox();
             this.btnLogin = new System.Windows.Forms.Button();
+            this.lnkRegister = new System.Windows.Forms.LinkLabel();
             this.SuspendLayout();
             // 
             // lblUser
@@ -84,10 +86,22 @@
             this.btnLogin.UseVisualStyleBackColor = true;
             this.btnLogin.Click += new System.EventHandler(this.btnLogin_Click);
             // 
+            // lnkRegister
+            // 
+            this.lnkRegister.AutoSize = true;
+            this.lnkRegister.Location = new System.Drawing.Point(140, 180);
+            this.lnkRegister.Name = "lnkRegister";
+            this.lnkRegister.Size = new System.Drawing.Size(120, 20);
+            this.lnkRegister.TabIndex = 5;
+            this.lnkRegister.TabStop = true;
+            this.lnkRegister.Text = "Tạo tài khoản mới";
+            this.lnkRegister.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.lnkRegister_LinkClicked);
+            // 
             // frmLogin
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(400, 200);
+            this.Controls.Add(this.lnkRegister);
             this.Controls.Add(this.btnLogin);
             this.Controls.Add(this.txtPass);
             this.Controls.Add(this.txtUser);
