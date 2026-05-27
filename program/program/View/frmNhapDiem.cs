@@ -1,9 +1,10 @@
+using Microsoft.Data.SqlClient;
+using program.DataAccess;
+using program.Helpers;
+using program.Models;
 using System;
 using System.Data;
 using System.Windows.Forms;
-using Microsoft.Data.SqlClient;
-using program.DataAccess;
-using program.Models;
 
 namespace program.View
 {
@@ -62,11 +63,25 @@ namespace program.View
 
             try
             {
+                string pubKeyXml = "";
+                var dtNV = SqlDbContext.ExecuteQuery("SP_SEL_PUBKEY_BY_MANV", new[] { new SqlParameter("@MANV", UserSession.MaNV) });
+
+                if (dtNV != null && dtNV.Rows.Count > 0 && dtNV.Rows[0]["PUBKEY"] != DBNull.Value)
+                    pubKeyXml = dtNV.Rows[0]["PUBKEY"].ToString();
+
+                if (string.IsNullOrEmpty(pubKeyXml))
+                {
+                    MessageBox.Show("Không tìm thấy Public Key để mã hóa!");
+                    return;
+                }
+
+                byte[] encryptedDiem = SecurityHelper.EncryptRSAWithKey(diemThi.ToString(), pubKeyXml);
+
                 var paras = new[]
                 {
                     new SqlParameter("@MASV", maSv),
                     new SqlParameter("@MAHP", maHp),
-                    new SqlParameter("@DIEMTHI", diemThi),
+                    new SqlParameter("@DIEM_ENC", encryptedDiem),
                     new SqlParameter("@MANV", UserSession.MaNV)
                 };
 
@@ -88,6 +103,44 @@ namespace program.View
                 new SqlParameter("@MANV", UserSession.MaNV),
                 new SqlParameter("@MK", UserSession.Password)
             });
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                string keysFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Keys");
+                string privKeyPath = Path.Combine(keysFolder, $"PrivateKey_{UserSession.MaNV}.enc");
+                string privateKeyXml = "";
+
+                if (File.Exists(privKeyPath))
+                {
+                    try
+                    {
+                        byte[] encryptedPrivKey = File.ReadAllBytes(privKeyPath);
+                        privateKeyXml = SecurityHelper.DecryptAES(encryptedPrivKey, UserSession.Password);
+                    }
+                    catch { }
+                }
+
+                dt.Columns.Add("DIEM_TMP", typeof(string));
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    if (row["DIEMTHI"] != DBNull.Value && !string.IsNullOrEmpty(privateKeyXml))
+                    {
+                        try
+                        {
+                            byte[] encDiem = (byte[])row["DIEMTHI"];
+                            row["DIEM_TMP"] = SecurityHelper.DecryptRSA(encDiem, privateKeyXml);
+                        }
+                        catch
+                        {
+                            row["DIEM_TMP"] = "Lỗi giải mã";
+                        }
+                    }
+                }
+
+                dt.Columns.Remove("DIEMTHI");
+                dt.Columns["DIEM_TMP"].ColumnName = "DIEMTHI";
+
+            }
 
             dgvBangDiem.AutoGenerateColumns = true;
             dgvBangDiem.DataSource = dt;

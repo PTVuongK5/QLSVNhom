@@ -106,13 +106,15 @@ namespace program.View
                 }
 
                 // Đặt tên file theo định dạng PrivateKey_MANV.xml
-                string privateKeyPath = Path.Combine(keysFolder, $"PrivateKey_{manv}.xml");
+                string privateKeyPath = Path.Combine(keysFolder, $"PrivateKey_{manv}.enc");
 
-                // Ghi chuỗi privateKeyXml ra file
-                File.WriteAllText(privateKeyPath, privateKeyXml);
+                // 1. Dùng mật khẩu người dùng nhập để mã hóa chuỗi XML của Private Key
+                byte[] encryptedPrivateKey = SecurityHelper.EncryptAES(privateKeyXml, password);
 
-                // Thông báo cho người dùng biết chỗ lưu file
-                MessageBox.Show($"Tạo tài khoản thành công.\nKhóa Private Key của bạn đã được lưu tại:\n{privateKeyPath}\n\nVui lòng không xóa file này để có thể đăng nhập và giải mã lương!",
+                // 2. Ghi mảng byte đã mã hóa ra file
+                File.WriteAllBytes(privateKeyPath, encryptedPrivateKey);
+
+                MessageBox.Show($"Tạo tài khoản thành công.\nKhóa bí mật đã được mã hóa an toàn và lưu tại:\n{privateKeyPath}\n\nVui lòng không xóa file này!",
                                 "Thông báo hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 this.DialogResult = DialogResult.OK;

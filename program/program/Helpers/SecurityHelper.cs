@@ -43,6 +43,59 @@ namespace program.Helpers
                 return Encoding.UTF8.GetString(decryptedBytes);
             }
         }
+        public static byte[] EncryptAES(string plainText, string password)
+        {
+            byte[] salt = new byte[16];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(salt);
+            }
+
+            using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 100000, HashAlgorithmName.SHA256);
+            byte[] key = pbkdf2.GetBytes(32);
+
+            using var aes = Aes.Create();
+            aes.Key = key;
+            aes.GenerateIV();
+            byte[] iv = aes.IV;
+
+            using var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+            byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
+            byte[] cipherBytes = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
+
+            byte[] result = new byte[salt.Length + iv.Length + cipherBytes.Length];
+            Buffer.BlockCopy(salt, 0, result, 0, salt.Length);
+            Buffer.BlockCopy(iv, 0, result, salt.Length, iv.Length);
+            Buffer.BlockCopy(cipherBytes, 0, result, salt.Length + iv.Length, cipherBytes.Length);
+
+            return result;
+        }
+        public static string DecryptAES(byte[] encryptedPayload, string password)
+        {
+            // Cục payload tối thiểu phải có 16 byte Salt + 16 byte IV = 32 byte
+            if (encryptedPayload == null || encryptedPayload.Length <= 32)
+                throw new ArgumentException("Dữ liệu mã hóa không hợp lệ hoặc bị hỏng.");
+
+            byte[] salt = new byte[16];
+            byte[] iv = new byte[16];
+            byte[] cipherBytes = new byte[encryptedPayload.Length - 32];
+
+            Buffer.BlockCopy(encryptedPayload, 0, salt, 0, salt.Length);
+            Buffer.BlockCopy(encryptedPayload, salt.Length, iv, 0, iv.Length);
+            Buffer.BlockCopy(encryptedPayload, salt.Length + iv.Length, cipherBytes, 0, cipherBytes.Length);
+
+            using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 100000, HashAlgorithmName.SHA256);
+            byte[] key = pbkdf2.GetBytes(32);
+
+            using var aes = Aes.Create();
+            aes.Key = key;
+            aes.IV = iv;
+
+            using var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+            byte[] plainBytes = decryptor.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
+
+            return Encoding.UTF8.GetString(plainBytes);
+        }
     }
 
 }

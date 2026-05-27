@@ -365,7 +365,19 @@ BEGIN
 END;
 GO
 
---Giải mã và hiển thị điểm thi của một sinh viên cụ thể (yêu cầu mật khẩu để truy cập Private Key)
+CREATE OR ALTER PROCEDURE SP_SEL_PUBKEY_BY_MANV
+    @MANV VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Truy vấn lấy khóa công khai của nhân viên
+    SELECT PUBKEY 
+    FROM NHANVIEN 
+    WHERE MANV = @MANV;
+END;
+GO
+
 CREATE OR ALTER PROCEDURE SP_SEL_BANGDIEM_BY_MASV
     @MASV VARCHAR(20),
     @MANV VARCHAR(20),
@@ -374,60 +386,67 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF NOT EXISTS (
+    IF NOT EXISTS
+    (
         SELECT 1
         FROM SINHVIEN sv
-        INNER JOIN LOP l ON sv.MALOP = l.MALOP
-        WHERE sv.MASV = @MASV AND l.MANV = @MANV
+        JOIN LOP l ON sv.MALOP = l.MALOP
+        WHERE sv.MASV = @MASV
+        AND l.MANV = @MANV
     )
     BEGIN
-        RAISERROR (N'Không có quyền xem bảng điểm của sinh viên này.', 16, 1);
+        RAISERROR(N'Không có quyền xem bảng điểm.',16,1);
         RETURN;
     END
 
-    SELECT bd.MASV,
-           bd.MAHP,
-           CAST(DECRYPTBYASYMKEY(ASYMKEY_ID(@MANV), bd.DIEMTHI, @MK) AS NVARCHAR(20)) AS DIEMTHI
+    SELECT
+        bd.MASV,
+        bd.MAHP,
+        bd.DIEMTHI
     FROM BANGDIEM bd
-    WHERE bd.MASV = @MASV
-    ORDER BY bd.MAHP;
+    WHERE bd.MASV = @MASV;
 END;
 GO
 
---Thêm mới hoặc cập nhật điểm thi đã được mã hóa bằng Public Key (RSA_2048) của nhân viên
 CREATE OR ALTER PROCEDURE SP_UPSERT_BANGDIEM_ENC
     @MASV VARCHAR(20),
     @MAHP VARCHAR(20),
-    @DIEMTHI DECIMAL(5, 2),
+    @DIEM_ENC VARBINARY(MAX),
     @MANV VARCHAR(20)
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF NOT EXISTS (
+    IF NOT EXISTS
+    (
         SELECT 1
         FROM SINHVIEN sv
-        INNER JOIN LOP l ON sv.MALOP = l.MALOP
-        WHERE sv.MASV = @MASV AND l.MANV = @MANV
+        JOIN LOP l ON sv.MALOP = l.MALOP
+        WHERE sv.MASV = @MASV
+        AND l.MANV = @MANV
     )
     BEGIN
-        RAISERROR (N'Không có quyền nhập điểm cho sinh viên này.', 16, 1);
+        RAISERROR(N'Không có quyền nhập điểm.',16,1);
         RETURN;
     END
 
-    DECLARE @DIEM_ENC VARBINARY(MAX);
-    SET @DIEM_ENC = ENCRYPTBYASYMKEY(ASYMKEY_ID(@MANV), CAST(@DIEMTHI AS NVARCHAR(20)));
-
-    IF EXISTS (SELECT 1 FROM BANGDIEM WHERE MASV = @MASV AND MAHP = @MAHP)
+    IF EXISTS
+    (
+        SELECT 1
+        FROM BANGDIEM
+        WHERE MASV = @MASV
+        AND MAHP = @MAHP
+    )
     BEGIN
         UPDATE BANGDIEM
         SET DIEMTHI = @DIEM_ENC
-        WHERE MASV = @MASV AND MAHP = @MAHP;
+        WHERE MASV = @MASV
+        AND MAHP = @MAHP;
     END
     ELSE
     BEGIN
-        INSERT INTO BANGDIEM (MASV, MAHP, DIEMTHI)
-        VALUES (@MASV, @MAHP, @DIEM_ENC);
+        INSERT INTO BANGDIEM
+        VALUES (@MASV,@MAHP,@DIEM_ENC);
     END
 END;
 GO
@@ -576,5 +595,3 @@ BEGIN
 END;
 GO
 
-select*
-from NHANVIEN

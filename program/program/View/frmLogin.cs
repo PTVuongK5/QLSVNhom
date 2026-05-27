@@ -60,18 +60,20 @@ namespace program.View
                         byte[] luongEncrypted = (byte[])dt.Rows[0]["LUONG"];
 
                         string keysFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Keys");
-                        string privateKeyPath = Path.Combine(keysFolder, $"PrivateKey_{manv}.xml");
+                        string privateKeyPath = Path.Combine(keysFolder, $"PrivateKey_{manv}.enc");
 
                         if (File.Exists(privateKeyPath))
                         {
-                            // Đọc Private Key và giải mã
-                            string privateKeyXml = File.ReadAllText(privateKeyPath);
-                            luongGiaiMa = SecurityHelper.DecryptRSA(luongEncrypted, privateKeyXml) ?? "Không thể giải mã";
+                            byte[] encryptedPrivateKey = File.ReadAllBytes(privateKeyPath);
+
+                            string privateKeyXml = SecurityHelper.DecryptAES(encryptedPrivateKey, password);
+
+                            luongGiaiMa = SecurityHelper.DecryptRSA(luongEncrypted, privateKeyXml);
+
                         }
                         else
                         {
-                            MessageBox.Show($"Cảnh báo: Không tìm thấy file Khóa bí mật (PrivateKey_{manv}.xml) trên máy này. Hệ thống không thể giải mã lương của bạn!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            luongGiaiMa = "Không thể giải mã";
+                            MessageBox.Show("Không tìm thấy file khóa bí mật trên máy này!");
                         }
                     }
 
