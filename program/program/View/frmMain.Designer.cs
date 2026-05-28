@@ -35,6 +35,7 @@
             this.mnuNhapDiem = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuLogout = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuExit = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuLuong = new System.Windows.Forms.ToolStripMenuItem();
             this.pnlContent = new System.Windows.Forms.Panel();
             this.lblStatus = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
@@ -45,6 +46,7 @@
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.mnuLopHoc,
             this.mnuSinhVien,
+            this.mnuLuong,
             this.mnuNhapDiem,
             this.mnuLogout,
             this.mnuExit});
@@ -67,6 +69,13 @@
             this.mnuSinhVien.Size = new System.Drawing.Size(89, 24);
             this.mnuSinhVien.Text = "Sinh viên";
             this.mnuSinhVien.Click += new System.EventHandler(this.mnuSinhVien_Click);
+            // 
+            // mnuLuong
+            // 
+            this.mnuLuong.Name = "mnuLuong";
+            this.mnuLuong.Size = new System.Drawing.Size(65, 24);
+            this.mnuLuong.Text = "Lương";
+            this.mnuLuong.Click += new System.EventHandler(this.mnuLuong_Click);
             // 
             // mnuNhapDiem
             // 
@@ -135,6 +144,7 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem mnuLopHoc;
         private System.Windows.Forms.ToolStripMenuItem mnuSinhVien;
+        private System.Windows.Forms.ToolStripMenuItem mnuLuong;
         private System.Windows.Forms.ToolStripMenuItem mnuNhapDiem;
         private System.Windows.Forms.ToolStripMenuItem mnuLogout;
         private System.Windows.Forms.ToolStripMenuItem mnuExit;

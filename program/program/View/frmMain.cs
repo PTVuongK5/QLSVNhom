@@ -17,8 +17,20 @@ namespace program.View
         private void frmMain_Load(object sender, EventArgs e)
         {
             lblStatus.Text = $"Nhân viên: {UserSession.TenNV} | Mã NV: {UserSession.MaNV} | Đang hoạt động";
+       
+                OpenChildForm(new frmLopHoc());
+        }
 
-            OpenChildForm(new frmLopHoc());
+        private void mnuLuong_Click(object sender, EventArgs e)
+        {
+            // Only admin allowed
+            if (!string.Equals(UserSession.TenDN, "admin", StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("Chỉ Admin mới được phép quản lý lương.");
+                return;
+            }
+
+            OpenChildForm(new frmLuongManager());
         }
 
         /// <summary>
