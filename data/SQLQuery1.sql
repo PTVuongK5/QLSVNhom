@@ -517,16 +517,9 @@ INSERT INTO HOCPHAN (MAHP, TENHP, SOTC) VALUES ('HP02', N'An toàn thông tin', 
 GO
 
 
-
-
-EXEC SP_INS_PUBLIC_NHANVIEN 
-    'NV04', 
-    N'Phạm Thanh Vương', 
-    'vuong@hcmus.edu.vn', 
-    5000000, 
-    'vuong', 
-    '123';
-GO
+--------------------
+-- LAB 4
+--------------------
 
 ALTER TABLE NHANVIEN ALTER COLUMN PUBKEY VARCHAR(MAX);
 GO
@@ -534,17 +527,15 @@ CREATE OR ALTER PROCEDURE SP_INS_PUBLIC_ENCRYPT_NHANVIEN
     @MANV VARCHAR(20),
     @HOTEN NVARCHAR(100),
     @EMAIL VARCHAR(20),
-    @LUONG VARBINARY(MAX),  -- Nhận mảng byte[] Lương đã mã hóa RSA từ Client
+    @LUONG VARBINARY(MAX),
     @TENDN NVARCHAR(100),
-    @MK VARBINARY(MAX),     -- Nhận mảng byte[] Mật khẩu đã băm SHA1 từ Client
-    @PUB VARCHAR(MAX)       -- Nhận chuỗi XML Khóa Public từ Client
+    @MK VARBINARY(MAX),
+    @PUB VARCHAR(MAX)
 AS
 BEGIN
-    -- Ngăn SQL Server trả về thông báo số dòng bị ảnh hưởng, giúp tối ưu hiệu suất
     SET NOCOUNT ON;
 
     BEGIN TRY
-        -- Thực hiện chèn dữ liệu vào bảng
         INSERT INTO NHANVIEN (MANV, HOTEN, EMAIL, LUONG, TENDN, MATKHAU, PUBKEY)
         VALUES (
             @MANV, 
@@ -557,7 +548,6 @@ BEGIN
         );
     END TRY
     BEGIN CATCH
-        -- Bắt lỗi và ném ngược lại cho C# hiển thị (nếu có lỗi như trùng khóa chính, trùng TENDN...)
         THROW;
     END CATCH
 END;
@@ -565,12 +555,11 @@ GO
 
 CREATE OR ALTER PROCEDURE SP_SEL_PUBLIC_ENCRYPT_NHANVIEN
     @TENDN NVARCHAR(100),
-    @MK VARBINARY(MAX) -- Nhận mật khẩu đã được mã hóa SHA1 từ Client
+    @MK VARBINARY(MAX)
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Trả về đúng 4 trường thông tin như yêu cầu: MANV, HOTEN, EMAIL, LUONG
     SELECT 
         MANV, 
         HOTEN, 
@@ -588,10 +577,45 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Truy vấn lấy MANV để C# kiểm tra xem đã có người dùng mã này chưa
     SELECT MANV 
     FROM NHANVIEN
     WHERE MANV = @MANV;
 END;
 GO
 
+
+
+-----------------------
+-- Cập nhật lương
+-----------------------
+CREATE OR ALTER PROCEDURE SP_SEL_PUBKEY_BY_MANV
+    @MANV VARCHAR(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT PUBKEY 
+    FROM NHANVIEN 
+    WHERE MANV = @MANV;
+END;
+GO
+
+
+CREATE OR ALTER PROCEDURE SP_UPD_NHANVIEN_LUONG
+    @MANV VARCHAR(20),
+    @LUONG_ENC VARBINARY(MAX) 
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM NHANVIEN WHERE MANV = @MANV)
+    BEGIN
+        RAISERROR(N'Không tìm thấy mã nhân viên này trong hệ thống.', 16, 1);
+        RETURN;
+    END
+
+    UPDATE NHANVIEN
+    SET LUONG = @LUONG_ENC
+    WHERE MANV = @MANV;
+END;
+GO
